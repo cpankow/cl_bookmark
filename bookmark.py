@@ -13,6 +13,12 @@ class Bookmark(object):
         self.filetype = None
         self._cached = False
 
+    def __str__(self):
+        return "<%s> (%s)" % (self.url, ", ".join(self.tags))
+
+    def __repr__(self):
+        return self.__str__()
+
     def add_tags(self, *args):
         self.tags |= set(args)
 
