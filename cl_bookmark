@@ -2,6 +2,7 @@
 import sys
 import os
 import argparse
+from urllib2 import urlparse
 
 import bookmark
 
@@ -42,12 +43,31 @@ def parse_tags(tagstr=None):
         tags |= set(substr.split())
     return tags
 
+def parse_file(fname, reject_invalid=True):
+    new_bookmarks = []
+    with open(fname) as urllist:
+        for line in urllist.readlines():
+            if not line:
+                continue
+
+            res = urlparse.urlparse(line)
+            if not res.netloc and reject_invalid:
+                print >>sys.stderr, "URL does not appear to be a valid web address. Rejecting.\nURL: %s" % line
+                continue
+            elif not res.netloc:
+                print >>sys.stderr, "URL does not appear to be a valid web address. Continuing per request.\nURL: %s" % line
+
+            new_bookmarks.append(bookmark.Bookmark(line.strip()))
+            print new_bookmarks[-1]
+    return new_bookmarks
+
 mode = preprocess_cmd_line()
 if mode is None and ("-h" not in sys.argv or "--help" not in sys.argv):
     print "No subcommand given, valid subcommands are %s" % ", ".join(SUB_COMMANDS)
 argp = argparse.ArgumentParser()
 argp.add_argument("-u", "--url", help="URL to bookmark")
 argp.add_argument("-t", "--tags", action="append", help="Tags to apply to URL. Can either be given as \"tag1 tag2 tag3\" and / or multiple invocations of this option can be given.")
+argp.add_argument("-p", "--parse-list", help="Parse through a file, attempting to pull out as many URLs as possible, adding them to your bookmarks.")
 args = argp.parse_args()
 
 tags = parse_tags(args.tags) or ()
@@ -55,14 +75,25 @@ tags = parse_tags(args.tags) or ()
 bookmarks = retrieve_bm()
 
 if mode == "add":
-    print "Adding %s\n\twith tags: %s" % (args.url, ", ".join(tags))
-    bookmarks.append(bookmark.Bookmark(args.url, tags=tags))
+    if args.url is None and args.parse_list is None:
+        exit("Nothing to add. Use --url or --parse-list to indicate additions.")
+    if args.url:
+        print "Adding %s\n\twith tags: %s" % (args.url, ", ".join(tags))
+        bookmarks.append(bookmark.Bookmark(args.url, tags=tags))
+    if args.parse_list:
+        print "Parsing %s to look for URLs." % args.parse_list
+        bookmarks.extend(parse_file(args.parse_list))
     update_bm_json(bookmarks)
 if mode == "update":
     pass
 elif mode == "delete":
     pass
 elif mode == "search":
-    pass
+    for bm in bookmarks:
+        print "URL: %s" % bm.url
+        print "\tLast accessed: %d" % int(bm.last_accessed)
+        print "\tTags: %s" % ", ".join(bm.tags)
 elif mode == "list":
+    pass
+elif mode == "open":
     pass
