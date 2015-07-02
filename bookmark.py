@@ -17,12 +17,12 @@ class Bookmark(object):
         self.add_tags(*tags)
         self.filetype = None
         self.is_alive = False
-        self.check_alive()
+        #self.check_alive()
 
         self._cached = False
         self.title = None
 
-        self.update()
+        #self.update()
 
     def __str__(self):
         return "<%s> (%s)" % (self.url, ", ".join(self.tags))
