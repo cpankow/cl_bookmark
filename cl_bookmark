@@ -3,13 +3,14 @@ import sys
 import os
 import argparse
 from urllib2 import urlparse
+import webbrowser
 
 import termcolor
 
 import bookmark
 
 BM_LOC = os.path.expanduser("~/.cl_bookmark/bookmarks.json")
-SUB_COMMANDS = ["add", "delete", "search", "update"]
+SUB_COMMANDS = ["add", "delete", "search", "update", "open"]
 usage = "Available subcommands: %s" % ", ".join(SUB_COMMANDS)
 
 def preprocess_cmd_line():
@@ -136,12 +137,15 @@ elif mode == "search":
     if args.url is None and not tags:
         filter_cond = False
 
+    def filter_urls(bms):
+        return [bm.url != args.url and not (tags & bm.tags) for bm in bms]
+
+    filter_idx = filter_urls(bookmarks)
     for i, bm in enumerate(bookmarks):
         #alive_resp = bm.check_alive()
 
-        if filter_cond:
-            if bm.url != args.url and not (tags & bm.tags):
-                continue
+        if filter_cond and filter_idx[i]:
+            continue
 
         print "(%d) URL: %s (%s)" % (i, format_link(bm), "alive" if bm.is_alive else "not alive")
         if bm.title is not None:
@@ -154,4 +158,7 @@ elif mode == "search":
         print "\tTags: %s" % ", ".join(map(format_tag, bm.tags))
     print format_info("Helpful hint: OS X Terminal users can use cmd + double click to open a link")
 elif mode == "open":
-    pass
+    # FIXME: Do search then open
+    if args.url_id:
+        for url_id in map(int, args.url_id):
+            webbrowser.open(bookmarks[url_id].url)
