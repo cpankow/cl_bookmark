@@ -43,7 +43,7 @@ def parse_tags(tagstr=None):
         return None
     tags = set()
     for substr in tagstr:
-        tags |= set(substr.split())
+        tags |= set(map(unicode, substr.split()))
     return tags
 
 def parse_file(fname, reject_invalid=True):
@@ -127,9 +127,18 @@ elif mode == "delete":
     update_bm_json(bookmarks)
 
 elif mode == "search":
+    if args.url:
+        print "searching for url: %s" % bm.url
+    if tags:
+        print "searching for tags: %s" % ", ".join(tags)
+
     for i, bm in enumerate(bookmarks):
-        alive_resp = bm.check_alive()
-        print "(%d) URL: %s (%s/%d)" % (i, format_link(bm), "alive" if bm.is_alive else "not alive", alive_resp)
+        #alive_resp = bm.check_alive()
+
+        if bm.url != args.url and not (tags & bm.tags):
+            continue
+
+        print "(%d) URL: %s (%s)" % (i, format_link(bm), "alive" if bm.is_alive else "not alive")
         if bm.title is not None:
             print "Description: %s" % format_descr(bm.title)
         import time
