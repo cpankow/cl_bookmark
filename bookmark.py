@@ -26,12 +26,9 @@ class Bookmark(object):
         self.last_accessed = time.time()
 
     def parse_urldomain(self):
-        if "://" in self.url:
-            protocol, url = self.url.split("://")
-        else:
-            url = self.url
-
-        self.url_domain = url.split("/")[0]
+        from urllib2 import urlparse
+        res = urlparse.urlparse(self.url)
+        self.url_domain = res.netloc
 
     def to_html(self, sort_by=None):
         pass
