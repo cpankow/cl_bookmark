@@ -4,6 +4,8 @@ import os
 import argparse
 from urllib2 import urlparse
 
+import termcolor
+
 import bookmark
 
 BM_LOC = os.path.expanduser("~/.cl_bookmark/bookmarks.json")
@@ -61,6 +63,14 @@ def parse_file(fname, reject_invalid=True):
             print new_bookmarks[-1]
     return new_bookmarks
 
+def format_link(bm):
+    return "%s://%s%s" % (termcolor.colored(bm._scheme, "blue", None, ["underline"]), \
+        termcolor.colored(bm.url_domain, "cyan", None, ["underline"]), \
+        termcolor.colored(bm._fullpath, "blue", None, ["underline"]))
+
+def format_info(strn):
+    return termcolor.colored(strn, None, None, ["reverse"])
+
 mode = preprocess_cmd_line()
 if mode is None and ("-h" not in sys.argv or "--help" not in sys.argv):
     print "No subcommand given, valid subcommands are %s" % ", ".join(SUB_COMMANDS)
@@ -90,9 +100,15 @@ elif mode == "delete":
     pass
 elif mode == "search":
     for bm in bookmarks:
-        print "URL: %s" % bm.url
-        print "\tLast accessed: %d" % int(bm.last_accessed)
+        alive_resp = bm.check_alive()
+        print "URL: %s (%s/%d)" % (format_link(bm), "alive" if bm.is_alive else "not alive", alive_resp)
+        import time
+        DATETIME_FMT = "%b %d, %Y (%H:%M:%S) %Z"
+        create = time.strftime(DATETIME_FMT, time.localtime(bm.created))
+        access = time.strftime(DATETIME_FMT, time.localtime(bm.last_accessed))
+        print "\tCreated %s\n\tLast accessed: %s" % (create, access)
         print "\tTags: %s" % ", ".join(bm.tags)
+    print format_info("Helpful hint: OS X Terminal users can use cmd + double click to open a link")
 elif mode == "list":
     pass
 elif mode == "open":
