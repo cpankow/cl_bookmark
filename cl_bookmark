@@ -98,7 +98,23 @@ if mode == "add":
 if mode == "update":
     pass
 elif mode == "delete":
-    pass
+    del_idx = []
+
+    for i, bm in enumerate(bookmarks):
+        if bm.url == args.url:
+            del_idx.append(i)
+            continue
+        if tags and any([tag in bm.tags for tag in tags]):
+            del_idx.append(i)
+            continue
+
+    print "Deleting %d URLs" % len(del_idx)
+    del_idx = sorted(del_idx)
+    del_idx.reverse()
+    for i in sorted(del_idx):
+        del bookmarks[i]
+    update_bm_json(bookmarks)
+
 elif mode == "search":
     for bm in bookmarks:
         alive_resp = bm.check_alive()
