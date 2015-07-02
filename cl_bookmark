@@ -10,6 +10,7 @@ import bookmark
 
 BM_LOC = os.path.expanduser("~/.cl_bookmark/bookmarks.json")
 SUB_COMMANDS = ["add", "delete", "list", "search"]
+usage = "Available subcommands: %s" % ", ".join(SUB_COMMANDS)
 
 def preprocess_cmd_line():
     mode = None
@@ -74,7 +75,7 @@ def format_info(strn):
 mode = preprocess_cmd_line()
 if mode is None and ("-h" not in sys.argv or "--help" not in sys.argv):
     print "No subcommand given, valid subcommands are %s" % ", ".join(SUB_COMMANDS)
-argp = argparse.ArgumentParser()
+argp = argparse.ArgumentParser(usage=usage)
 argp.add_argument("-u", "--url", help="URL to bookmark")
 argp.add_argument("-t", "--tags", action="append", help="Tags to apply to URL. Can either be given as \"tag1 tag2 tag3\" and / or multiple invocations of this option can be given.")
 argp.add_argument("-p", "--parse-list", help="Parse through a file, attempting to pull out as many URLs as possible, adding them to your bookmarks.")
