@@ -2,19 +2,19 @@ import time
 import json
 
 class Bookmark(object):
-    def __init__(self, url):
+    def __init__(self, url, tags=set()):
         self.url = url
         self.parse_urldomain()
 
         self.created = time.time()
         self.last_accessed = self.created
         self.tags = set()
+        self.add_tags(*tags)
         self.filetype = None
         self._cached = False
 
     def add_tags(self, *args):
-        for arg in args:
-            self.tags.add(arg)
+        self.tags |= set(args)
 
     def update(self):
         self.last_accessed = time.time()
