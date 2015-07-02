@@ -9,7 +9,7 @@ import termcolor
 import bookmark
 
 BM_LOC = os.path.expanduser("~/.cl_bookmark/bookmarks.json")
-SUB_COMMANDS = ["add", "delete", "search"]
+SUB_COMMANDS = ["add", "delete", "search", "update"]
 usage = "Available subcommands: %s" % ", ".join(SUB_COMMANDS)
 
 def preprocess_cmd_line():
@@ -74,6 +74,12 @@ def format_link(bm):
 def format_info(strn):
     return termcolor.colored(strn, None, None, ["reverse"])
 
+def format_tag(strn):
+    return termcolor.colored(strn, 'red', None, ["reverse"])
+
+def format_descr(strn):
+    return termcolor.colored(strn, 'grey', None, ["bold"])
+
 mode = preprocess_cmd_line()
 if mode is None and ("-h" not in sys.argv or "--help" not in sys.argv):
     print "No subcommand given, valid subcommands are %s" % ", ".join(SUB_COMMANDS)
@@ -125,13 +131,13 @@ elif mode == "search":
         alive_resp = bm.check_alive()
         print "(%d) URL: %s (%s/%d)" % (i, format_link(bm), "alive" if bm.is_alive else "not alive", alive_resp)
         if bm.title is not None:
-            print "Description: %s" % bm.title
+            print "Description: %s" % format_descr(bm.title)
         import time
         DATETIME_FMT = "%b %d, %Y (%H:%M:%S) %Z"
         create = time.strftime(DATETIME_FMT, time.localtime(bm.created))
         access = time.strftime(DATETIME_FMT, time.localtime(bm.last_accessed))
         print "\tCreated %s\n\tLast accessed: %s" % (create, access)
-        print "\tTags: %s" % ", ".join(bm.tags)
+        print "\tTags: %s" % ", ".join(map(format_tag, bm.tags))
     print format_info("Helpful hint: OS X Terminal users can use cmd + double click to open a link")
 elif mode == "open":
     pass
