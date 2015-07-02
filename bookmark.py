@@ -4,6 +4,8 @@ import json
 from urllib2 import urlparse
 import httplib
 
+import pyquery
+
 class Bookmark(object):
     def __init__(self, url, tags=set()):
         self.url = url
@@ -14,9 +16,13 @@ class Bookmark(object):
         self.tags = set()
         self.add_tags(*tags)
         self.filetype = None
-        self._cached = False
         self.is_alive = False
         self.check_alive()
+
+        self._cached = False
+        self.title = None
+
+        self.update()
 
     def __str__(self):
         return "<%s> (%s)" % (self.url, ", ".join(self.tags))
@@ -24,22 +30,23 @@ class Bookmark(object):
     def __repr__(self):
         return self.__str__()
 
+    def __get_request(self, url=None):
+        sch, dom, path = self.parse_urldomain(url)
+        if self._scheme == "http":
+            conn = httplib.HTTPConnection(self.url_domain)
+        else:
+            conn = httplib.HTTPSConnection(self.url_domain)
+        conn.request("GET", path)
+        return conn.getresponse()
+
     def __follow_redirect(self, newurl):
 
         _total_tries = 2
         while _total_tries > 0:
-
-            sch, dom, path = self.parse_urldomain(newurl)
-            if sch == "http":
-                conn = httplib.HTTPConnection(dom)
-            else:
-                conn = httplib.HTTPSConnection(dom)
-
-            conn.request("GET", path)
-            resp = conn.getresponse()
             _total_tries -= 1
             #print "New status: %d" % resp.status
             if resp.status in (301, 302):
+                resp = self.__get_request(newurl)
                 #print >>sys.stderr, "Number of redirects: %d" % (10 - _total_tries)
                 headers = dict(resp.getheaders())
                 newnewurl = resp.getheader("location")
@@ -54,12 +61,7 @@ class Bookmark(object):
         return newurl, resp
 
     def check_alive(self):
-        if self._scheme == "http":
-            conn = httplib.HTTPConnection(self.url_domain)
-        else:
-            conn = httplib.HTTPSConnection(self.url_domain)
-        conn.request("GET", self._fullpath)
-        resp = conn.getresponse()
+        resp = self.__get_request()
         if resp.status in (301, 302):
             init_stat = resp.status
             redirect = resp.getheader("location")
@@ -79,8 +81,18 @@ class Bookmark(object):
     def add_tags(self, *args):
         self.tags |= set(args)
 
+    def get_title(self, html):
+        parser = pyquery.PyQuery(html)
+        if parser('title'):
+            self.title = parser('title').text().strip()
+
     def update(self):
         self.check_alive()
+        if self.is_alive:
+            resp = self.__get_request()
+            if resp.status != 200:
+                return # Something happened. Go away now.
+            self.get_title(resp.read())
         self.last_accessed = time.time()
 
     def parse_urldomain(self, url=None):

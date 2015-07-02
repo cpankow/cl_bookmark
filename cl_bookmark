@@ -102,6 +102,8 @@ elif mode == "search":
     for bm in bookmarks:
         alive_resp = bm.check_alive()
         print "URL: %s (%s/%d)" % (format_link(bm), "alive" if bm.is_alive else "not alive", alive_resp)
+        if bm.title is not None:
+            print "Description: %s" % bm.title
         import time
         DATETIME_FMT = "%b %d, %Y (%H:%M:%S) %Z"
         create = time.strftime(DATETIME_FMT, time.localtime(bm.created))
