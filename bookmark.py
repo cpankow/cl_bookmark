@@ -81,18 +81,30 @@ class Bookmark(object):
     def add_tags(self, *args):
         self.tags |= set(args)
 
-    def get_title(self, html):
+    def get_descr(self, html):
         parser = pyquery.PyQuery(html)
+        if parser('meta[name=description]'):
+            self.title = parser('meta[name=description]').attr('content')
+            return
         if parser('title'):
             self.title = parser('title').text().strip()
 
-    def update(self):
+    def get_meta_keywords(self, html):
+        parser = pyquery.PyQuery(html)
+        if parser('meta[name=keywords]'):
+            new_tags = parser('meta[name=keywords]').attr('content').split(",")
+            self.tags |= set(map(str.strip, new_tags))
+
+    def update(self, set_meta_to_tags=True):
         self.check_alive()
         if self.is_alive:
             resp = self.__get_request()
             if resp.status != 200:
                 return # Something happened. Go away now.
-            self.get_title(resp.read())
+            html = resp.read()
+            self.get_descr(html)
+            if set_meta_to_tags:
+                self.get_meta_keywords(html)
         self.last_accessed = time.time()
 
     def parse_urldomain(self, url=None):
