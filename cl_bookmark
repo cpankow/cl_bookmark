@@ -90,7 +90,7 @@ argp.add_argument("-t", "--tags", action="append", help="Tags to apply to URL. C
 argp.add_argument("-p", "--parse-list", help="Parse through a file, attempting to pull out as many URLs as possible, adding them to your bookmarks.")
 args = argp.parse_args()
 
-tags = parse_tags(args.tags) or ()
+tags = parse_tags(args.tags) or set()
 
 bookmarks = retrieve_bm()
 
@@ -132,11 +132,16 @@ elif mode == "search":
     if tags:
         print "searching for tags: %s" % ", ".join(tags)
 
+    filter_cond = True
+    if args.url is None and not tags:
+        filter_cond = False
+
     for i, bm in enumerate(bookmarks):
         #alive_resp = bm.check_alive()
 
-        if bm.url != args.url and not (tags & bm.tags):
-            continue
+        if filter_cond:
+            if bm.url != args.url and not (tags & bm.tags):
+                continue
 
         print "(%d) URL: %s (%s)" % (i, format_link(bm), "alive" if bm.is_alive else "not alive")
         if bm.title is not None:
