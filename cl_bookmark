@@ -9,7 +9,7 @@ import termcolor
 import bookmark
 
 BM_LOC = os.path.expanduser("~/.cl_bookmark/bookmarks.json")
-SUB_COMMANDS = ["add", "delete", "list", "search"]
+SUB_COMMANDS = ["add", "delete", "search"]
 usage = "Available subcommands: %s" % ", ".join(SUB_COMMANDS)
 
 def preprocess_cmd_line():
@@ -60,7 +60,9 @@ def parse_file(fname, reject_invalid=True):
             elif not res.netloc:
                 print >>sys.stderr, "URL does not appear to be a valid web address. Continuing per request.\nURL: %s" % line
 
-            new_bookmarks.append(bookmark.Bookmark(line.strip()))
+            new_bm = bookmark.Bookmark(line.strip())
+            new_bm.update()
+            new_bookmarks.append(new_bm)
             print new_bookmarks[-1]
     return new_bookmarks
 
@@ -76,6 +78,7 @@ mode = preprocess_cmd_line()
 if mode is None and ("-h" not in sys.argv or "--help" not in sys.argv):
     print "No subcommand given, valid subcommands are %s" % ", ".join(SUB_COMMANDS)
 argp = argparse.ArgumentParser(usage=usage)
+argp.add_argument("-i", "--url-id", action="append", help="URL ID to address")
 argp.add_argument("-u", "--url", help="URL to bookmark")
 argp.add_argument("-t", "--tags", action="append", help="Tags to apply to URL. Can either be given as \"tag1 tag2 tag3\" and / or multiple invocations of this option can be given.")
 argp.add_argument("-p", "--parse-list", help="Parse through a file, attempting to pull out as many URLs as possible, adding them to your bookmarks.")
@@ -90,15 +93,17 @@ if mode == "add":
         exit("Nothing to add. Use --url or --parse-list to indicate additions.")
     if args.url:
         print "Adding %s\n\twith tags: %s" % (args.url, ", ".join(tags))
-        bookmarks.append(bookmark.Bookmark(args.url, tags=tags))
+        bm = bookmark.Bookmark(args.url, tags=tags)
+        bm.update()
+        bookmarks.append(bm)
     if args.parse_list:
         print "Parsing %s to look for URLs." % args.parse_list
         bookmarks.extend(parse_file(args.parse_list))
     update_bm_json(bookmarks)
-if mode == "update":
+elif mode == "update":
     pass
 elif mode == "delete":
-    del_idx = []
+    del_idx = map(int, args.url_id) or []
 
     for i, bm in enumerate(bookmarks):
         if bm.url == args.url:
@@ -116,9 +121,9 @@ elif mode == "delete":
     update_bm_json(bookmarks)
 
 elif mode == "search":
-    for bm in bookmarks:
+    for i, bm in enumerate(bookmarks):
         alive_resp = bm.check_alive()
-        print "URL: %s (%s/%d)" % (format_link(bm), "alive" if bm.is_alive else "not alive", alive_resp)
+        print "(%d) URL: %s (%s/%d)" % (i, format_link(bm), "alive" if bm.is_alive else "not alive", alive_resp)
         if bm.title is not None:
             print "Description: %s" % bm.title
         import time
@@ -128,7 +133,5 @@ elif mode == "search":
         print "\tCreated %s\n\tLast accessed: %s" % (create, access)
         print "\tTags: %s" % ", ".join(bm.tags)
     print format_info("Helpful hint: OS X Terminal users can use cmd + double click to open a link")
-elif mode == "list":
-    pass
 elif mode == "open":
     pass
