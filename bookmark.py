@@ -120,7 +120,7 @@ class Bookmark(object):
     def to_html(self, sort_by=None):
         pass
 
-EXPORT_FIELDS = ["created", "last_accessed", "filetype", "_cached"]
+EXPORT_FIELDS = ["created", "last_accessed", "title", "filetype", "_cached"]
 def to_json(bookmarks, fname):
     json_dict = {}
     for bm in bookmarks:
