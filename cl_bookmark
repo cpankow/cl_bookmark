@@ -2,6 +2,7 @@
 import sys
 import os
 import argparse
+import ssl
 from urllib2 import urlparse
 import webbrowser
 
@@ -62,7 +63,10 @@ def parse_file(fname, reject_invalid=True):
                 print >>sys.stderr, "URL does not appear to be a valid web address. Continuing per request.\nURL: %s" % line
 
             new_bm = bookmark.Bookmark(line.strip())
-            new_bm.update()
+            try:
+                new_bm.update()
+            except ssl.SSLError: # All known falure modes go here
+                print "Could not contact URL for information, skipping this step."
             new_bookmarks.append(new_bm)
             print new_bookmarks[-1]
     return new_bookmarks
