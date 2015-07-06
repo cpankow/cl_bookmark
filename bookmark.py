@@ -143,7 +143,9 @@ def from_json(fname):
     return bookmarks
 
 # Test code
+"""
 bm = Bookmark("https://en.wikipedia.org/wiki/Main_Page")
 bm.add_tags("wikipedia", "test", "other tags")
 to_json([bm], "test.json")
 print from_json("test.json")
+"""
