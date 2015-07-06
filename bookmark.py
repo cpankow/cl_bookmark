@@ -44,9 +44,9 @@ class Bookmark(object):
         _total_tries = 2
         while _total_tries > 0:
             _total_tries -= 1
+            resp = self.__get_request(newurl)
             #print "New status: %d" % resp.status
             if resp.status in (301, 302):
-                resp = self.__get_request(newurl)
                 #print >>sys.stderr, "Number of redirects: %d" % (10 - _total_tries)
                 headers = dict(resp.getheaders())
                 newnewurl = resp.getheader("location")
