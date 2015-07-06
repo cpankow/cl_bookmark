@@ -49,7 +49,7 @@ def parse_tags(tagstr=None):
 
 def parse_file(fname, reject_invalid=True):
     new_bookmarks = []
-    with open(fname) as urllist:
+    with open(fname) if fname is not sys.stdin else fname as urllist:
         for line in urllist.readlines():
             if not line:
                 continue
@@ -97,7 +97,8 @@ bookmarks = retrieve_bm()
 
 if mode == "add":
     if args.url is None and args.parse_list is None:
-        exit("Nothing to add. Use --url or --parse-list to indicate additions.")
+        print "Reading from stdin, Ctrl+D to finish."
+        bookmarks.extend(parse_file(sys.stdin))
     if args.url:
         print "Adding %s\n\twith tags: %s" % (args.url, ", ".join(tags))
         bm = bookmark.Bookmark(args.url, tags=tags)
